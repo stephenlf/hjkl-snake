@@ -1,6 +1,7 @@
 use rand::{Rng, SeedableRng};
 use rand_chacha::ChaCha8Rng;
 use std::collections::{HashSet, VecDeque};
+pub mod render;
 
 /// Integer coordinate type for grid cells (not pixels)
 pub type Coord = i32;
@@ -170,8 +171,7 @@ impl GameState {
 
         let init_len = self.cfg.initial_len.max(1);
         for i in 0..init_len as i32 {
-            self.snake
-                .push_back(Point::new(cx - i, cy));
+            self.snake.push_back(Point::new(cx - i, cy));
         }
 
         // Spawn one piece of food for now.
@@ -337,34 +337,11 @@ impl Raster2D {
         }
     }
 
-    pub fn get(&self, x: Coord, y: Coord) -> Option<bool> {
+    pub fn get(&self, x: Coord, y: Coord) -> bool {
         match self.idx(x, y) {
-            Some(idx) => Some(self.cells[idx]),
-            None => None,
+            Some(idx) => self.cells[idx],
+            None => false,
         }
-    }
-
-    /// Print raster in simple ascii
-    fn strmap(&self) -> String {
-        (0..self.height)
-            .map(|y| {
-                let to_row = |x| {
-                    if let Some(true) = self.get(x, y) {
-                        '8'
-                    } else {
-                        '.'
-                    }
-                };
-                (0..self.width).map(to_row).collect::<String>()
-            })
-            .collect::<Vec<String>>()
-            .join("\n")
-    }
-}
-
-impl std::fmt::Display for Raster2D {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.strmap())
     }
 }
 
