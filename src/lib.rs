@@ -216,7 +216,7 @@ impl GameState {
         let is_eating = self.food.contains(&next_head);
         let tail_will_move_off = !is_eating;
         if self.collides_with_body(next_head, tail_will_move_off) {
-            self.status = GameStatus::Running;
+            self.status = GameStatus::Dead;
             return TickResult {
                 ate_food: false,
                 status: self.status,
@@ -440,5 +440,38 @@ mod tests {
         g.dir = Direction::Right;
         let res = g.tick();
         assert_eq!(res.status, GameStatus::Dead);
+    }
+
+    #[test]
+    fn self_collision_kills() {
+        // Small arena, no wrapping; we’ll craft a U-shape.
+        let mut g = GameState::with_seed(
+            GameConfig {
+                width: 4,
+                height: 4,
+                wrap_edges: false,
+                initial_len: 1,       // we'll overwrite the snake anyway
+                braille_friendly: true,
+            },
+            1,
+        );
+
+        // Clear and handcraft the snake: front == head.
+        g.snake.clear();
+        g.food.clear();
+
+        // Snake shape (head→tail), coordinates:
+        // H(2,1) → (2,2) → (1,2) → (1,1) → T(1,0)
+        // Moving LEFT from head (2,1) goes to (1,1) which is body (not tail) ⇒ collision.
+        g.snake.push_back(Point::new(2, 1)); // head
+        g.snake.push_back(Point::new(2, 2));
+        g.snake.push_back(Point::new(1, 2));
+        g.snake.push_back(Point::new(1, 1));
+        g.snake.push_back(Point::new(1, 0)); // tail
+
+        g.dir = Direction::Left;
+
+        let res = g.tick();
+        assert_eq!(res.status, GameStatus::Dead, "expected self-collision to kill");
     }
 }
